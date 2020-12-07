@@ -331,7 +331,6 @@ class Simulation:
 
             sleep(seconds_until_next_tick)
 
-        simulation_time_counter = time.time()
         for slot_no in range(slot_resume, slot_count):
             self._update_progress_info(slot_no, slot_count)
 

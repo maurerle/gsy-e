@@ -88,6 +88,7 @@ class Offers:
         self.posted = self._delete_past_offers(self.posted)
         self.bought = self._delete_past_offers(self.bought)
         self.split = {}
+        self.sold = {}
 
     @property
     def open(self):
