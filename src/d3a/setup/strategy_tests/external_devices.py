@@ -54,9 +54,11 @@ def get_setup(config):
                 [
                     Area('load', strategy=LoadHoursExternalStrategy(
                         avg_power_W=200, hrs_per_day=24, hrs_of_day=list(range(0, 24)),
-                        final_buying_rate=35)
+                        initial_buying_rate=35, final_buying_rate=35)
                          ),
-                    Area('pv', strategy=PVExternalStrategy(panel_count=4)
+                    Area('pv', strategy=PVExternalStrategy(
+                        panel_count=4, initial_selling_rate=15, final_selling_rate=10
+                    )
                          ),
 
                 ], external_connection_available=True,

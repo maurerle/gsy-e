@@ -147,6 +147,10 @@ class RedisMarketExternalConnection:
             ret_val["transaction_id"] = payload_data.get("transaction_id", None)
             self.redis_com.publish_json(grid_fees_response_channel, ret_val)
 
+    def match_recommend_callback(self, payload):
+        print(f'match_recommend_callback: {payload["data"]["match_pair"]}')
+        self.area.next_market.match_pair(payload["data"]["match_pair"])
+
     def dso_market_stats_callback(self, payload):
         dso_market_stats_response_channel = f"{self.channel_prefix}/response/dso_market_stats"
         payload_data = payload["data"] \
@@ -210,7 +214,7 @@ class RedisMarketExternalConnection:
             self.redis_com.publish_json(deactivate_event_channel, deactivate_msg)
 
     def trigger_aggregator_commands(self, command):
-        print(f'trigger_aggregator_commands: {command}')
+        # print(f'trigger_aggregator_commands: {command}')
         if "type" not in command:
             return {
                 "status": "error",
@@ -224,6 +228,8 @@ class RedisMarketExternalConnection:
                 return self.market_stats_callback(command)
             elif command["type"] == "dso_market_stats":
                 return self.dso_market_stats_callback(command)
+            elif command["type"] == "match_recommend":
+                return self.match_recommend_callback(command)
             else:
                 return {
                     "command": command["type"], "status": "error",

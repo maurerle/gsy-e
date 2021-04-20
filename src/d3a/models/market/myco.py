@@ -270,3 +270,14 @@ class MycoMarket(TwoSidedPayAsBid):
         #
         #         self.accept_bid_offer_pair(bid, offer, matched_rate,
         #                                    trade_bid_info, selected_energy)
+
+    def match_pair(self, match_pair):
+        # print(f'match_pair: {match_pair}')
+        for pair in match_pair:
+            print(f'pair: {pair}')
+            print(f'allbids: {self.bids}')
+            # selected_bid = self.bids[pair[0]]
+            print(f'alloffers: {self.offers}')
+            # selected_offer = self.offers[pair[1]]
+            # self.accept_bid_offer_pair(bid, offer, matched_rate,
+            #                            trade_bid_info, selected_energy)
