@@ -81,7 +81,9 @@ class RedisMarketExternalConnection:
             f"{self.channel_prefix}/dso_market_stats": self.dso_market_stats_callback,
             f"{self.channel_prefix}/grid_fees": self.set_grid_fees_callback,
             f"{self.channel_prefix}/register_participant": self._register,
-            f"{self.channel_prefix}/unregister_participant": self._unregister}
+            f"{self.channel_prefix}/unregister_participant": self._unregister,
+            f'{self.channel_prefix}/list_stocks': self._list_recommendation
+        }
         if self.area.config.external_redis_communicator.is_enabled:
             self.aggregator = self.area.config.external_redis_communicator.aggregator
         self.redis_com.sub_to_multiple_channels(sub_channel_dict)
@@ -160,6 +162,19 @@ class RedisMarketExternalConnection:
             ret_val["transaction_id"] = payload_data.get("transaction_id", None)
             self.redis_com.publish_json(dso_market_stats_response_channel, ret_val)
 
+    def _list_recommendation(self, payload):
+        pass
+
+    def event_tick(self):
+        if self.is_aggregator_controlled:
+            market_info = self.next_market.info
+            market_info["area_uuid"] = str(self.area.uuid)
+            market_info["event"] = "tick"
+            market_info["status"] = "ready"
+            market_info["bids"] = self.next_market.get_open_bids()
+            market_info["offers"] = self.next_market.get_open_offers()
+            self.aggregator.add_batch_tick_event(self.area.uuid, market_info)
+
     def event_market_cycle(self):
         if self.area.current_market is None:
             return
@@ -195,6 +210,7 @@ class RedisMarketExternalConnection:
             self.redis_com.publish_json(deactivate_event_channel, deactivate_msg)
 
     def trigger_aggregator_commands(self, command):
+        print(f'trigger_aggregator_commands: {command}')
         if "type" not in command:
             return {
                 "status": "error",

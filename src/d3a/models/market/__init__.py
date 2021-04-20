@@ -257,3 +257,13 @@ class Market:
             "offers": [o.serializable_dict() for o in self.offer_history],
             "trades": [t.serializable_dict() for t in self.trades]
         }
+
+    def get_open_offers(self):
+        return {
+            "offers": [o.serializable_dict() for o in self.offers.values()],
+        }
+
+    def get_open_bids(self):
+        return {
+            "bids": [o.serializable_dict() for o in self.bids.values()],
+        }

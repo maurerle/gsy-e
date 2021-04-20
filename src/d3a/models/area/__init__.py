@@ -144,6 +144,8 @@ class Area:
         log.debug(f"External connection {external_connection_available} for area {self.name}")
         self.redis_ext_conn = RedisMarketExternalConnection(self) \
             if external_connection_available and self.strategy is None else None
+        if external_connection_available:
+            print(f'Area UUID: {self.uuid}')
         self.should_update_child_strategies = False
 
     @property
@@ -381,6 +383,8 @@ class Area:
                                           self.strategy.trigger_aggregator_commands)
 
     def tick(self):
+        if not self.strategy and self.redis_ext_conn is not None:
+            self.redis_ext_conn.event_tick()
         self._consume_commands_from_aggregator()
 
         if ConstSettings.IAASettings.MARKET_TYPE == 2 or \

@@ -250,7 +250,6 @@ class ExternalMixin:
             self._last_dispatched_tick = current_tick
             if self.connected:
                 self.redis.publish_json(tick_event_channel, current_tick_info)
-
             if self.is_aggregator_controlled:
                 self.redis.aggregator.add_batch_tick_event(self.device.uuid, current_tick_info)
 

@@ -62,6 +62,7 @@ class AggregatorHandler:
         self._add_batch_event(device_uuid, event, self.batch_market_cycle_events)
 
     def add_batch_tick_event(self, device_uuid, event):
+        # print(f'add_batch_tick_event: {event}')
         self._add_batch_event(device_uuid, event, self.batch_tick_events)
 
     def add_batch_trade_event(self, device_uuid, event):
@@ -85,6 +86,7 @@ class AggregatorHandler:
             self._unselect_aggregator(message)
 
     def _select_aggregator(self, message):
+        print(f'_select_aggregator: {message}')
         if message['aggregator_uuid'] not in self.aggregator_device_mapping:
             self.aggregator_device_mapping[message['aggregator_uuid']] = []
             self.aggregator_device_mapping[message['aggregator_uuid']].\
@@ -178,6 +180,7 @@ class AggregatorHandler:
             )
 
     def receive_batch_commands_callback(self, payload):
+        print(f'receive_batch_commands_callback: {payload}')
         batch_command_message = json.loads(payload["data"])
         transaction_id = batch_command_message["transaction_id"]
         with self.lock:
@@ -212,6 +215,8 @@ class AggregatorHandler:
         for aggregator_uuid, event_list in event_dict.items():
             event_channel = f"external-aggregator/{d3a.constants.COLLABORATION_ID}/" \
                             f"{aggregator_uuid}/events/all"
+            # print(f'event_type: {event_type}')
+            # print(f'event_list: {event_list}')
             redis.publish_json(
                 event_channel,
                 {"event": event_type, "content": event_list}
@@ -219,6 +224,7 @@ class AggregatorHandler:
         event_dict.clear()
 
     def publish_all_events(self, redis):
+        # print(f'self.batch_tick_events: {self.batch_tick_events}')
         self._publish_all_events_from_one_type(redis, self.batch_market_cycle_events, "market")
         self._publish_all_events_from_one_type(redis, self.batch_tick_events, "tick")
         self._publish_all_events_from_one_type(redis, self.batch_trade_events, "trade")
