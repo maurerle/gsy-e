@@ -9,7 +9,7 @@ try:
         REQUIREMENTS = [r.partition("#")[0] for r in req if not r.startswith("-e")]
         REQUIREMENTS.extend(
             [f"gsy-framework @ "
-             f"git+https://github.com/gridsingularity/gsy-framework.git@{gsy_framework_branch}"
+             f"git+https://github.com/gridsingularity/gsy-framework.git@feature/GSYE-1"
              ])
 except OSError:
     # Shouldn't happen
