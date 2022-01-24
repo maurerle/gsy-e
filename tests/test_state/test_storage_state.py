@@ -2,14 +2,14 @@ from unittest.mock import patch
 
 from pendulum import now
 
-from gsy_e.models.state import StorageState
+from gsy_e.models.state import StorageState, ESSEnergyOrigin
 
 
 class TestStorageState:
     """Test the StorageState class."""
 
     @staticmethod
-    def test_market_cycle():
+    def test_market_cycle_reset_orders():
         """Test the market cycle handler of the storage state.
 
         TODO: Cover the whole module in context of GSY-E:92
@@ -33,3 +33,46 @@ class TestStorageState:
             # The future_time_slots[0] is in the spot market, so it has to reset the orders
             assert storage_state.offered_buy_kWh[future_time_slots[0]] == 0
             assert storage_state.offered_sell_kWh[future_time_slots[0]] == 0
+
+    @staticmethod
+    def test_market_cycle_update_used_storage():
+        storage_state = StorageState(initial_soc=100,
+                                     capacity=100)
+        past_time_slot = now()
+        current_time_slot = past_time_slot.add(minutes=15)
+        future_time_slots = [current_time_slot.add(minutes=15),
+                             current_time_slot.add(minutes=30)]
+        storage_state.add_default_values_to_state_profiles(
+            [past_time_slot, current_time_slot, *future_time_slots])
+        storage_state.pledged_sell_kWh[past_time_slot] = 10
+        storage_state.pledged_buy_kWh[past_time_slot] = 0
+        storage_state.market_cycle(past_time_slot, current_time_slot, future_time_slots)
+        assert storage_state.used_storage == 90
+        storage_state.pledged_sell_kWh[past_time_slot] = 0
+        storage_state.pledged_buy_kWh[past_time_slot] = 10
+        storage_state.market_cycle(past_time_slot, current_time_slot, future_time_slots)
+        assert storage_state.used_storage == 100
+
+    @staticmethod
+    def test_market_cycle_ess_share_time_series_dict():
+        storage_state = StorageState(initial_soc=100,
+                                     capacity=100,
+                                     initial_energy_origin=ESSEnergyOrigin.LOCAL)
+        past_time_slot = now()
+        current_time_slot = past_time_slot.add(minutes=15)
+        future_time_slots = [current_time_slot.add(minutes=15),
+                             current_time_slot.add(minutes=30)]
+        storage_state.add_default_values_to_state_profiles(
+            [past_time_slot, current_time_slot, *future_time_slots])
+
+        energy = 10
+        storage_state.update_used_storage_share(energy, ESSEnergyOrigin.LOCAL)
+        storage_state.update_used_storage_share(energy, ESSEnergyOrigin.UNKNOWN)
+        storage_state.update_used_storage_share(energy, ESSEnergyOrigin.UNKNOWN)
+
+        storage_state.pledged_sell_kWh[past_time_slot] = 10
+        storage_state.market_cycle(past_time_slot, current_time_slot, future_time_slots)
+        expected_time_series = {ESSEnergyOrigin.LOCAL: storage_state.initial_capacity_kWh + energy,
+                                ESSEnergyOrigin.EXTERNAL: 0.0,
+                                ESSEnergyOrigin.UNKNOWN: 2*energy}
+        assert storage_state.time_series_ess_share[past_time_slot] == expected_time_series
