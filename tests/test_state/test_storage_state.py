@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import pytest
 from pendulum import now, duration
 
 from gsy_e.models.state import StorageState, ESSEnergyOrigin
@@ -132,8 +133,52 @@ class TestStorageState:
             assert energy_to_buy_dict[time_slot] >= 0.0
 
     @staticmethod
-    def test_check_state():
-        """  TODO: Test this method."""
+    def test_check_state_charge_less_than_min_soc_error():
+        storage_state = StorageState(capacity=100,
+                                     min_allowed_soc=50,
+                                     initial_soc=30)
+        current_time_slot = now()
+        with pytest.raises(AssertionError) as error:
+            storage_state.check_state(current_time_slot)
+        assert "less than min soc" in str(error.value)
+
+    @staticmethod
+    def test_check_state_storage_surpasses_capacity_error():
+        storage_state = StorageState(capacity=100,
+                                     min_allowed_soc=50,
+                                     initial_soc=110)
+        current_time_slot = now()
+        with pytest.raises(AssertionError) as error:
+            storage_state.check_state(current_time_slot)
+        assert "surpassed the capacity" in str(error.value)
+
+    @staticmethod
+    def test_check_state_offered_and_pledged_energy_in_range():
+        storage_state = StorageState(capacity=100,
+                                     min_allowed_soc=20,
+                                     initial_soc=50)
+
+        current_time_slot = now()
+        storage_state.add_default_values_to_state_profiles([current_time_slot])
+        max_value = storage_state.capacity * (1 - storage_state.min_allowed_soc_ratio)
+
+        def set_attribute_value_and_test(attribute):
+            attribute[current_time_slot] = -1
+            with pytest.raises(AssertionError):
+                storage_state.check_state(current_time_slot)
+            attribute[current_time_slot] = max_value + 1
+            with pytest.raises(AssertionError):
+                storage_state.check_state(current_time_slot)
+            attribute[current_time_slot] = max_value
+            try:
+                storage_state.check_state(current_time_slot)
+            except AssertionError as error:
+                raise AssertionError from error
+
+        set_attribute_value_and_test(storage_state.offered_sell_kWh)
+        set_attribute_value_and_test(storage_state.pledged_sell_kWh)
+        set_attribute_value_and_test(storage_state.pledged_buy_kWh)
+        set_attribute_value_and_test(storage_state.offered_buy_kWh)
 
     @staticmethod
     def test_delete_past_state_values():
