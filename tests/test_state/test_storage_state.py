@@ -180,6 +180,22 @@ class TestStorageState:
         set_attribute_value_and_test(storage_state.pledged_buy_kWh)
         set_attribute_value_and_test(storage_state.offered_buy_kWh)
 
-    @staticmethod
-    def test_delete_past_state_values():
-        """  TODO: Test this method."""
+    def test_delete_past_state_values_market_slot_not_in_past(self):
+        storage_state = StorageState()
+        past_time_slot, current_time_slot, future_time_slots = self._initialize_time_slots()
+        active_market_slot_time_list = [past_time_slot, current_time_slot, *future_time_slots]
+        storage_state.add_default_values_to_state_profiles(active_market_slot_time_list)
+        with patch("gsy_e.gsy_e_core.util.ConstSettings.SettlementMarketSettings."
+                   "ENABLE_SETTLEMENT_MARKETS", True):
+            storage_state.delete_past_state_values(current_time_slot)
+            assert storage_state.pledged_sell_kWh.get(past_time_slot) is not None
+
+    def test_delete_past_state_values_market_slot_in_past(self):
+        storage_state = StorageState()
+        past_time_slot, current_time_slot, future_time_slots = self._initialize_time_slots()
+        active_market_slot_time_list = [past_time_slot, current_time_slot, *future_time_slots]
+        storage_state.add_default_values_to_state_profiles(active_market_slot_time_list)
+        with patch("gsy_e.gsy_e_core.util.ConstSettings.SettlementMarketSettings."
+                   "ENABLE_SETTLEMENT_MARKETS", False):
+            storage_state.delete_past_state_values(current_time_slot)
+            assert storage_state.pledged_sell_kWh.get(past_time_slot) is None
