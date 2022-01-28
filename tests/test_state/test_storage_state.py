@@ -1,3 +1,4 @@
+# pylint: disable = no-member, import-outside-toplevel
 from unittest.mock import patch
 
 import pytest
@@ -199,3 +200,33 @@ class TestStorageState:
                    "ENABLE_SETTLEMENT_MARKETS", False):
             storage_state.delete_past_state_values(current_time_slot)
             assert storage_state.pledged_sell_kWh.get(past_time_slot) is None
+
+    def test_add_default_values_to_state_profiles(self):
+        """TODO: Test this method.
+        assert that dictionaries entries are not none and equal to default value."""
+
+    def test_has_battery_reached_max_power(self):
+        """TODO: Test this method."""
+
+    def test_calculate_soc_for_time_slot(self):
+        """TODO: Test this method.
+        assert that dictionaries entries are not none"""
+
+    def test_battery_energy_per_slot(self):
+        """TODO: Test this method.
+        assert _battery_energy_per_slot is different than value set in constructor.
+        """
+
+    def test_free_storage(self):
+        """TODO: Test this method.
+        assert that return value >= 0 and not None"""
+
+    @staticmethod
+    def test_update_used_storage_share():
+        from gsy_e.models.state import EnergyOrigin
+        storage_state = StorageState()
+        initial_length = len(storage_state.get_used_storage_share)
+        storage_state.update_used_storage_share(energy=1.0, source=ESSEnergyOrigin.LOCAL)
+
+        assert len(storage_state.get_used_storage_share) == initial_length + 1
+        assert isinstance(storage_state.get_used_storage_share[-1], EnergyOrigin)
